@@ -1,0 +1,26 @@
+name: Build Permanent Environment
+on: workflow_dispatch
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # للسماح للأكشن بالرفع للمستودع
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Download Everything
+        run: python setup_assets.py
+
+      - name: Commit and Push Assets
+        run: |
+          git config --global user.name "GitHub Action"
+          git config --global user.email "action@github.com"
+          git add vendor/
+          git commit -m "Add permanent browser and libraries"
+          git push

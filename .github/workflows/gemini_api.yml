@@ -1,0 +1,37 @@
+name: Gemini Web API
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        required: true
+        type: string
+
+jobs:
+  execute-task:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Tools
+        run: |
+          pip install playwright camoufox
+          python -m camoufox fetch
+          playwright install-deps chromium
+
+      - name: Run Automation
+        env:
+          GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
+        run: python main.py "${{ github.event.inputs.prompt }}"
+
+      - name: Save Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-json
+          path: result.json
+          retention-days: 1

@@ -2,7 +2,27 @@ import asyncio
 import sys
 import json
 import os
+import shutil
+import zipfile
 
+# --- فك الضغط التلقائي قبل الاستيراد ---
+current_dir = os.getcwd()
+zip_path = os.path.join(current_dir, "vendor_assets.zip")
+extract_path = os.path.join(current_dir, "vendor_extracted")
+
+if os.path.exists(zip_path) and not os.path.exists(extract_path):
+    print("📦 جاري فك ضغط المكتبات الدائمة...")
+    with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+        zip_ref.extractall(extract_path)
+
+# إعداد المسارات للمجلد المفكوك
+vendor_python = os.path.join(extract_path, "python")
+sys.path.insert(0, vendor_python)
+os.environ["PLAYWRIGHT_BROWSERS_PATH"] = os.path.join(extract_path, "browsers")
+# ---------------------------------------
+
+# الآن يمكنك الاستيراد
+from camoufox.async_api import AsyncCamoufox
 # --- إعداد المسارات الدائمة (يجب أن تكون في قمة الملف) ---
 current_dir = os.getcwd()
 vendor_python = os.path.join(current_dir, "vendor/python")

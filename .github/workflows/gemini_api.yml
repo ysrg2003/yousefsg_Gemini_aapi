@@ -1,4 +1,4 @@
-name: Gemini Fast API (No Download)
+name: Gemini Simple API
 on:
   workflow_dispatch:
     inputs:
@@ -7,21 +7,22 @@ on:
         type: string
 
 jobs:
-  run:
+  run-system:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
 
-      - name: Run Gemini
+      - name: Run
         env:
-          PYTHONPATH: ${{ github.workspace }}/vendor/python
-          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/vendor/browsers
           GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
-        run: |
-          # هنا نستخدم بايثون مباشرة مع المجلد المرفوع
-          python3 main.py "${{ github.event.inputs.prompt }}"
+        run: python main.py "${{ github.event.inputs.prompt }}"
 
-      - name: Upload Result
+      - name: Result
         uses: actions/upload-artifact@v4
         with:
           name: gemini-json

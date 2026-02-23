@@ -17,10 +17,12 @@ jobs:
       - name: Download Everything
         run: python setup_assets.py
 
+# ... (نفس البداية)
       - name: Commit and Push Assets
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add vendor/
-          git commit -m "Add permanent browser and libraries"
+          git add vendor_assets.zip
+          git commit -m "Add permanent compressed assets"
           git push
+

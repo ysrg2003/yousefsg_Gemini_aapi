@@ -1,4 +1,4 @@
-name: Gemini Web API
+name: Gemini Fast API (No Download)
 on:
   workflow_dispatch:
     inputs:
@@ -7,31 +7,22 @@ on:
         type: string
 
 jobs:
-  execute-task:
+  run:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      
-      - name: Install Tools
-        run: |
-          pip install playwright camoufox
-          python -m camoufox fetch
-          playwright install-deps chromium
-
-      - name: Run Automation
+      - name: Run Gemini
         env:
+          PYTHONPATH: ${{ github.workspace }}/vendor/python
+          PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/vendor/browsers
           GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
-        run: python main.py "${{ github.event.inputs.prompt }}"
+        run: |
+          # هنا نستخدم بايثون مباشرة مع المجلد المرفوع
+          python3 main.py "${{ github.event.inputs.prompt }}"
 
-      - name: Save Result
+      - name: Upload Result
         uses: actions/upload-artifact@v4
         with:
           name: gemini-json
           path: result.json
-          retention-days: 1

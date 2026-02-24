@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gemini AAPI Pro | التجربة الفاخرة</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            /* الألوان في الوضع النهاري */
+            --primary-gradient: linear-gradient(135deg, #1a73e8 0%, #701af0 100%);
+            --bg-color: #f8f9fa;
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #202124;
+            --chat-bg: #ffffff;
+            --user-bubble: #e8f0fe;
+            --bot-bubble: #f1f3f4;
+            --border: #e0e0e0;
+        }
+
+        [data-theme="dark"] {
+            /* الألوان في الوضع الليلي */
+            --bg-color: #0f1114;
+            --card-bg: rgba(30, 31, 38, 0.9);
+            --text-main: #e8eaed;
+            --chat-bg: #1e1f26;
+            --user-bubble: #004a77;
+            --bot-bubble: #2d2f39;
+            --border: #3c4043;
+        }
+
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: var(--bg-color);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+            color: var(--text-main);
+            transition: all 0.3s ease;
+        }
+
+        .container { width: 100%; max-width: 900px; padding: 20px; position: relative; }
+
+        /* الهيدر والأزرار */
+        header { text-align: center; margin-bottom: 20px; }
+        h1 { background: var(--primary-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 2.2rem; margin: 0; }
+        
+        .theme-toggle {
+            position: absolute; top: 20px; left: 20px;
+            background: var(--card-bg); border: 1px solid var(--border);
+            padding: 8px; border-radius: 50%; cursor: pointer; color: var(--text-main);
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .settings-card {
+            background: var(--card-bg); padding: 20px; border-radius: 20px;
+            border: 1px solid var(--border); margin-bottom: 20px;
+            backdrop-filter: blur(10px); display: flex; gap: 10px;
+        }
+
+        input {
+            flex: 1; padding: 10px 15px; border: 1px solid var(--border);
+            border-radius: 10px; background: var(--chat-bg); color: var(--text-main);
+        }
+
+        /* منطقة الدردشة */
+        #chat-history {
+            height: 450px; overflow-y: auto; background: var(--chat-bg);
+            border-radius: 24px; padding: 20px; margin-bottom: 20px;
+            border: 1px solid var(--border); display: flex; flex-direction: column; gap: 15px;
+        }
+
+        .message { max-width: 80%; padding: 12px 18px; border-radius: 18px; font-size: 15px; line-height: 1.6; }
+        .user-msg { align-self: flex-start; background: var(--user-bubble); color: var(--text-main); border-bottom-right-radius: 4px; }
+        .bot-msg { align-self: flex-end; background: var(--bot-bubble); color: var(--text-main); border-bottom-left-radius: 4px; }
+
+        /* شريط الإدخال */
+        .input-area {
+            background: var(--chat-bg); border-radius: 30px; padding: 8px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.15); display: flex; align-items: center;
+            border: 1px solid var(--border);
+        }
+
+        textarea {
+            border: none; resize: none; padding: 12px 20px; font-size: 16px;
+            flex-grow: 1; background: transparent; color: var(--text-main); outline: none;
+        }
+
+        .send-btn {
+            background: #1a73e8; color: white; border: none; width: 45px; height: 45px;
+            border-radius: 50%; cursor: pointer; display: flex; align-items: center; justify-content: center;
+        }
+
+        #loader { display: none; text-align: center; margin-bottom: 10px; font-size: 12px; }
+    </style>
+</head>
+<body data-theme="light">
+
+<button class="theme-toggle" onclick="toggleTheme()">🌓</button>
+
+<div class="container">
+    <header>
+        <h1>Gemini AAPI Pro</h1>
+    </header>
+
+    <div class="settings-card">
+        <input type="password" id="token" placeholder="GitHub Token">
+        <input type="text" id="repo" placeholder="User/Repo">
+    </div>
+
+    <div id="chat-history">
+        <div class="message bot-msg">مرحباً بك في النسخة المطورة! كيف يمكنني مساعدتك اليوم؟</div>
+    </div>
+
+    <div id="loader">✨ جاري جلب الرد من خوادم Gemini...</div>
+
+    <div class="input-area">
+        <textarea id="prompt" rows="1" placeholder="اسأل أي شيء..."></textarea>
+        <button class="send-btn" id="runBtn" onclick="runAutomation()">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="white"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    // نظام التذكر التلقائي والوضع الليلي
+    window.onload = () => {
+        document.getElementById('token').value = localStorage.getItem('gh_token') || '';
+        document.getElementById('repo').value = localStorage.getItem('gh_repo') || '';
+        const savedTheme = localStorage.getItem('theme') || 'light';
+        document.body.setAttribute('data-theme', savedTheme);
+    };
+
+    function toggleTheme() {
+        const current = document.body.getAttribute('data-theme');
+        const next = current === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem('theme', next);
+    }
+
+    function saveSettings() {
+        localStorage.setItem('gh_token', document.getElementById('token').value);
+        localStorage.setItem('gh_repo', document.getElementById('repo').value);
+    }
+
+    async function runAutomation() {
+        const token = document.getElementById('token').value;
+        const repo = document.getElementById('repo').value;
+        const promptInput = document.getElementById('prompt');
+        const prompt = promptInput.value;
+
+        if(!token || !repo || !prompt) return alert("اكمل البيانات أولاً!");
+
+        saveSettings();
+        addMessage(prompt, 'user-msg');
+        promptInput.value = '';
+        document.getElementById('loader').style.display = 'block';
+        document.getElementById('runBtn').disabled = true;
+
+        try {
+            const start = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/gemini_api.yml/dispatches`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ ref: 'main', inputs: { prompt: prompt } })
+            });
+
+            if(!start.ok) throw new Error("فشل الوصول. تأكد من التوكن وصلاحياته.");
+
+            await monitorRun(repo, token);
+        } catch (e) {
+            addMessage("❌ خطأ: " + e.message, 'bot-msg');
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('runBtn').disabled = false;
+        }
+    }
+
+    async function monitorRun(repo, token) {
+        let completed = false;
+        while (!completed) {
+            await new Promise(r => setTimeout(r, 7000));
+            const res = await fetch(`https://api.github.com/repos/${repo}/actions/runs?per_page=1`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const lastRun = data.workflow_runs[0];
+
+            if (lastRun.status === "completed") {
+                completed = true;
+                if (lastRun.conclusion === "success") {
+                    await fetchAndUnzipResult(repo, lastRun.id, token);
+                } else {
+                    addMessage("❌ فشل السكريبت في إنتاج نتيجة.", 'bot-msg');
+                }
+            }
+        }
+    }
+
+    async function fetchAndUnzipResult(repo, runId, token) {
+        try {
+            const artRes = await fetch(`https://api.github.com/repos/${repo}/actions/runs/${runId}/artifacts`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const artData = await artRes.json();
+            const artifact = artData.artifacts.find(a => a.name === 'gemini-json');
+
+            const zipRes = await fetch(artifact.archive_download_url, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const blob = await zipRes.blob();
+            const jszip = new JSZip();
+            const zipContent = await jszip.loadAsync(blob);
+            const jsonFile = await zipContent.file("result.json").async("string");
+            
+            const finalData = JSON.parse(jsonFile);
+            addMessage(finalData.response, 'bot-msg');
+        } catch (e) {
+            addMessage("❌ فشل استخراج الرد من الملف المضغوط.", 'bot-msg');
+        } finally {
+            document.getElementById('loader').style.display = 'none';
+            document.getElementById('runBtn').disabled = false;
+        }
+    }
+
+    function addMessage(text, className) {
+        const history = document.getElementById('chat-history');
+        const div = document.createElement('div');
+        div.className = `message ${className}`;
+        div.innerText = text;
+        history.appendChild(div);
+        history.scrollTop = history.scrollHeight;
+    }
+</script>
+</body>
+</html>

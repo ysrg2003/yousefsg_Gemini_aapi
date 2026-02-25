@@ -1,4 +1,4 @@
-name: Build Permanent Environment
+name: 🚀 Build Permanent Vendor Assets
 on: workflow_dispatch
 
 jobs:

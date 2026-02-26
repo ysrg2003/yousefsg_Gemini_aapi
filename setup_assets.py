@@ -62,27 +62,12 @@ def setup():
         sys.exit(1)
 
     # 6. تنظيف الملفات الزائدة لتقليل الحجم
-    print("🧹 تنظيف عميق لتقليل الحجم إلى أقصى حد...")
-    # قائمة بالمجلدات التي لا نحتاجها إطلاقاً لتشغيل Gemini
-    shutil_targets = [
-        "python/share", "python/include", # ملفات تطوير لا لزوم لها
-        "browsers/chromium_headless_shell-1208/locales", # لغات المتصفح (نحتاج الإنجليزية فقط)
-        "browsers/chromium_headless_shell-1208/swiftshader", # معالجة رسومية لا نحتاجها في Headless
-        "camoufox_cache/dictionaries", # القواميس
-    ]
-    
-    for target in shutil_targets:
-        full_path = os.path.join(vendor_dir, target)
-        if os.path.exists(full_path):
-            shutil.rmtree(full_path)
-            print(f"🗑️ تم حذف: {target}")
-
-    # حذف ملفات محددة بالامتداد
+    print("🧹 تنظيف الملفات الزائدة (Pycache & Docs)...")
     for root, dirs, files in os.walk(vendor_dir):
-        for file in files:
-            if file.endswith(('.pdb', '.pyc', '.exe', '.txt', '.md')): # ملفات تصحيح وتوثيق
-                os.remove(os.path.join(root, file))
-                
+        for d in ["__pycache__", "tests", "test", "docs", "help"]:
+            if d in dirs:
+                shutil.rmtree(os.path.join(root, d))
+    
     
     # 7. عملية الضغط النهائي
     # استبدل سطر الضغط القديم بهذا الجزء:

@@ -9,7 +9,6 @@ on:
 jobs:
   run-system:
     runs-on: ubuntu-latest
-    # سقف زمني قصير جداً لأننا نستهدف أقل من 30 ثانية
     timeout-minutes: 5 
     
     steps:
@@ -21,31 +20,28 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
-          # إعداد المسارات الأساسية في بيئة النظام
+          # إعداد المسارات الأساسية
           PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/browsers
           CAMOUFOX_CACHE_DIR: /home/runner/.cache/camoufox
         run: |
           echo "📥 جاري سحب وفك الترسانة (Zstd Stream)..."
-          # تحميل وفك الضغط في تدفق واحد (Piping) لتوفير وقت الكتابة على القرص
+          # تحميل وفك الضغط
           gh release download v1.0.0 -p "vendor_assets.tar.zst" -O - | tar -I zstd -xf -
           
           echo "⚙️ إعداد البيئة الموازية..."
-          # 1. إعداد PYTHONPATH ليشمل مجلد المكتبات الذي تم فكه
-          export PYTHONPATH="${{ github.workspace }}/python:${PYTHONPATH}"
+          # 🚀 الإصلاح الجوهري: توجيه بايثون للمكان الصحيح للمكتبات
+          # بما أن المجلدات موجودة داخل python/ فنحن نحتاج هذا المسار تحديداً
+          export PYTHONPATH="${{ github.workspace }}/python"
           
-          # 2. إعداد الروابط التشعبية للمحرك (Symlink)
+          # إعداد الروابط التشعبية للمحرك
           mkdir -p /home/runner/.cache
           ln -sfn ${{ github.workspace }}/camoufox_cache /home/runner/.cache/camoufox
           
-          # 3. منح صلاحيات التنفيذ لمتصفح Chromium بشكل مباشر
+          # منح صلاحيات التنفيذ للمتصفح
           chmod +x browsers/chromium_headless_shell-1208/chrome-headless-shell 2>/dev/null || true
           
-          # 4. التأكد من وجود الملفات (اختياري للـ Debugging، يمكنك حذفه لاحقاً)
-          echo "📂 الملفات الحالية في المجلد:"
-          ls -F
-          
           echo "🚀 انطلاق المحرك الرئيسي..."
-          # تشغيل بايثون النظام مباشرة (أسرع من إعداد بيئة معزولة)
+          # استخدام python3 النظام مباشرة
           python3 main.py "${{ github.event.inputs.prompt }}"
 
       - name: 📤 Upload Result

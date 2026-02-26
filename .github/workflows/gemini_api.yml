@@ -10,43 +10,53 @@ jobs:
   run-system:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: 🏁 Checkout Code
+        uses: actions/checkout@v4
       
-      # ⚠️ أعدنا هذه الخطوة لأن المكتبات تم بناؤها خصيصاً للإصدار 3.11
-      - name: Set up Python
+      - name: 🐍 Set up Python 3.11
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
       - name: 📥 Download & Inject Assets
         run: |
-          echo "📥 سحب ملفات المحرك من الـ Release..."
+          echo "📥 جاري سحب الترسانة من الـ Release..."
+          # تحميل الملف المضغوط
           gh release download v1.0.0 -p "vendor_assets.zip"
+          
+          echo "📂 فك ضغط الملفات..."
           unzip -qo vendor_assets.zip
           
-          # 🚀 الخدعة الكبرى: نقل الكاش إلى المسار الذي يريده المحرك إجبارياً
+          echo "🔗 ربط المحرك بمسار النظام الافتراضي..."
+          # إنشاء المسار الأب في النظام
           mkdir -p /home/runner/.cache
-          mv camoufox_cache /home/runner/.cache/camoufox
           
-          # تفعيل الصلاحيات
+          # 🚀 الربط التشعبي: أهم خطوة لمنع إعادة التحميل
+          # نقوم بربط المجلد المستخرج بالمسار الذي يتوقعه Camoufox
+          ln -sf $(pwd)/camoufox_cache /home/runner/.cache/camoufox
+          
+          # إعطاء صلاحيات التنفيذ للمحركات
           chmod -R +x /home/runner/.cache/camoufox 2>/dev/null || true
           chmod -R +x browsers/ 2>/dev/null || true
+          
+          echo "✅ الترسانة جاهزة للعمل."
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Run
+      - name: 🚀 Run Automation
         env:
           GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
+          # تعريف المسارات للمكتبات والمحركات
           PYTHONPATH: ${{ github.workspace }}/python
           PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/browsers
-          # نبقي هذا للاحتياط
+          # إجبار المحرك على النظر في المسار المربوط
           CAMOUFOX_CACHE_DIR: /home/runner/.cache/camoufox
         run: |
-          echo "🚀 تشغيل الأتمتة..."
+          echo "🎬 تشغيل المحرك الرئيسي..."
           python main.py "${{ github.event.inputs.prompt }}"
 
-
-      - name: Result
+      - name: 📤 Upload Result
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gemini-json

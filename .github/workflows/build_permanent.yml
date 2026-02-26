@@ -48,7 +48,7 @@ jobs:
             يتم استدعاء هذا الـ Release تلقائياً في الـ Workflow الأساسي.
           draft: false
           prerelease: false
-          files: vendor_assets.zip
+          files: vendor_assets.tar.zst
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 

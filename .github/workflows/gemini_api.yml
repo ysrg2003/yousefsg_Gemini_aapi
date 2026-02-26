@@ -23,7 +23,13 @@ jobs:
           echo "📥 سحب ملفات المحرك من الـ Release..."
           gh release download v1.0.0 -p "vendor_assets.zip"
           unzip -qo vendor_assets.zip
-          chmod -R +x camoufox_cache/ 2>/dev/null || true
+          
+          # 🚀 الخدعة الكبرى: نقل الكاش إلى المسار الذي يريده المحرك إجبارياً
+          mkdir -p /home/runner/.cache
+          mv camoufox_cache /home/runner/.cache/camoufox
+          
+          # تفعيل الصلاحيات
+          chmod -R +x /home/runner/.cache/camoufox 2>/dev/null || true
           chmod -R +x browsers/ 2>/dev/null || true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -33,12 +39,12 @@ jobs:
           GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
           PYTHONPATH: ${{ github.workspace }}/python
           PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/browsers
-          # 🚀 مسار الكاش الذي سيمنع تحميل الـ 713MB
-          CAMOUFOX_CACHE_DIR: ${{ github.workspace }}/camoufox_cache 
+          # نبقي هذا للاحتياط
+          CAMOUFOX_CACHE_DIR: /home/runner/.cache/camoufox
         run: |
           echo "🚀 تشغيل الأتمتة..."
-          # عدنا لاستخدام python بدلاً من python3 لأن setup-python يضبطها تلقائياً
           python main.py "${{ github.event.inputs.prompt }}"
+
 
       - name: Result
         uses: actions/upload-artifact@v4

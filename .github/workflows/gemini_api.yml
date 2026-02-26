@@ -9,37 +9,43 @@ on:
 jobs:
   run-system:
     runs-on: ubuntu-latest
-    # نحدد مهلة زمنية قصيرة جداً لأننا نتوقع أداءً خارقاً
+    # سقف زمني قصير جداً لأننا نستهدف أقل من 30 ثانية
     timeout-minutes: 5 
     
     steps:
-      - name: 🏁 Checkout
+      - name: 🏁 Checkout Code
         uses: actions/checkout@v4
 
-      - name: ⚡ الإقلاع الخارق (التحميل والفك والتشغيل المتوازي)
+      - name: ⚡ الإقلاع الخارق (Extreme Speed Execution)
         shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
-          # إعداد المسارات فوراً في البيئة
-          PYTHONPATH: ${{ github.workspace }}/python
+          # إعداد المسارات الأساسية في بيئة النظام
           PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/browsers
           CAMOUFOX_CACHE_DIR: /home/runner/.cache/camoufox
         run: |
-          # 1. تحميل الترسانة وفك ضغطها في تدفق واحد (Piping)
-          # نستخدم غلاف (subshell) للتحميل والفك مباشرة لتوفير وقت الكتابة على القرص
-          echo "📥 جاري سحب وفك الترسانة في الذاكرة..."
+          echo "📥 جاري سحب وفك الترسانة (Zstd Stream)..."
+          # تحميل وفك الضغط في تدفق واحد (Piping) لتوفير وقت الكتابة على القرص
           gh release download v1.0.0 -p "vendor_assets.tar.zst" -O - | tar -I zstd -xf -
           
-          # 2. إعداد الروابط التشعبية للمحرك في لمح البصر
+          echo "⚙️ إعداد البيئة الموازية..."
+          # 1. إعداد PYTHONPATH ليشمل مجلد المكتبات الذي تم فكه
+          export PYTHONPATH="${{ github.workspace }}/python:${PYTHONPATH}"
+          
+          # 2. إعداد الروابط التشعبية للمحرك (Symlink)
           mkdir -p /home/runner/.cache
           ln -sfn ${{ github.workspace }}/camoufox_cache /home/runner/.cache/camoufox
           
-          # 3. منح صلاحيات التنفيذ للمتصفح بشكل سريع ومستهدف
+          # 3. منح صلاحيات التنفيذ لمتصفح Chromium بشكل مباشر
           chmod +x browsers/chromium_headless_shell-1208/chrome-headless-shell 2>/dev/null || true
           
-          echo "🚀 انطلاق المحرك..."
-          # 4. تشغيل بايثون النظام مباشرة (يوفر 8-12 ثانية من وقت Setup-Python)
+          # 4. التأكد من وجود الملفات (اختياري للـ Debugging، يمكنك حذفه لاحقاً)
+          echo "📂 الملفات الحالية في المجلد:"
+          ls -F
+          
+          echo "🚀 انطلاق المحرك الرئيسي..."
+          # تشغيل بايثون النظام مباشرة (أسرع من إعداد بيئة معزولة)
           python3 main.py "${{ github.event.inputs.prompt }}"
 
       - name: 📤 Upload Result

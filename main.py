@@ -21,8 +21,7 @@ vendor_python = os.path.join(extract_path, "python")
 os.environ["CAMOUFOX_CACHE_DIR"] = os.path.join(extract_path, "camoufox_cache")
 # إعداد مسارات Playwright والمكتبات
 os.environ["PLAYWRIGHT_BROWSERS_PATH"] = os.path.join(extract_path, "browsers")
-sys.path.insert(0, vendor_python)
-
+sys.path.insert(0, os.path.join(extract_path, "python"))
 # ==========================================================
 # 2. الاستيراد الآمن (بعد إعداد البيئة)
 # ==========================================================

@@ -9,49 +9,38 @@ on:
 jobs:
   run-system:
     runs-on: ubuntu-latest
+    # نحدد مهلة زمنية قصيرة جداً لأننا نتوقع أداءً خارقاً
+    timeout-minutes: 5 
+    
     steps:
-      - name: 🏁 Checkout Code
+      - name: 🏁 Checkout
         uses: actions/checkout@v4
-      
-      - name: 🐍 Set up Python 3.11
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
 
-      - name: 📥 Download & Inject Assets
-        run: |
-          echo "📥 سحب الترسانة المضغوطة بـ Zstd..."
-          gh release download v1.0.0 -p "vendor_assets.tar.zst"
-          
-          echo "⚡ فك الضغط فائق السرعة..."
-          # -x: extract, -I: zstd, -f: file
-          mkdir -p .temp_vendor
-          tar -I zstd -xf vendor_assets.tar.zst -C .
-          
-          # ملاحظة: بما أننا ضغطنا المحتويات مباشرة، الملفات ستنتشر في المجلد الحالي
-          # (python, browsers, camoufox_cache)
-          
-          echo "🔗 ربط المحرك..."
-          mkdir -p /home/runner/.cache
-          ln -sf $(pwd)/camoufox_cache /home/runner/.cache/camoufox
-          
-          chmod -R +x /home/runner/.cache/camoufox 2>/dev/null || true
-          chmod -R +x browsers/ 2>/dev/null || true
+      - name: ⚡ الإقلاع الخارق (التحميل والفك والتشغيل المتوازي)
+        shell: bash
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      
-      - name: 🚀 Run Automation
-        env:
           GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
-          # تعريف المسارات للمكتبات والمحركات
+          # إعداد المسارات فوراً في البيئة
           PYTHONPATH: ${{ github.workspace }}/python
           PLAYWRIGHT_BROWSERS_PATH: ${{ github.workspace }}/browsers
-          # إجبار المحرك على النظر في المسار المربوط
           CAMOUFOX_CACHE_DIR: /home/runner/.cache/camoufox
         run: |
-          echo "🎬 تشغيل المحرك الرئيسي..."
-          python main.py "${{ github.event.inputs.prompt }}"
+          # 1. تحميل الترسانة وفك ضغطها في تدفق واحد (Piping)
+          # نستخدم غلاف (subshell) للتحميل والفك مباشرة لتوفير وقت الكتابة على القرص
+          echo "📥 جاري سحب وفك الترسانة في الذاكرة..."
+          gh release download v1.0.0 -p "vendor_assets.tar.zst" -O - | tar -I zstd -xf -
+          
+          # 2. إعداد الروابط التشعبية للمحرك في لمح البصر
+          mkdir -p /home/runner/.cache
+          ln -sfn ${{ github.workspace }}/camoufox_cache /home/runner/.cache/camoufox
+          
+          # 3. منح صلاحيات التنفيذ للمتصفح بشكل سريع ومستهدف
+          chmod +x browsers/chromium_headless_shell-1208/chrome-headless-shell 2>/dev/null || true
+          
+          echo "🚀 انطلاق المحرك..."
+          # 4. تشغيل بايثون النظام مباشرة (يوفر 8-12 ثانية من وقت Setup-Python)
+          python3 main.py "${{ github.event.inputs.prompt }}"
 
       - name: 📤 Upload Result
         if: always()

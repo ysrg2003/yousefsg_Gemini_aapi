@@ -69,19 +69,23 @@ def setup():
                 shutil.rmtree(os.path.join(root, d))
 
     # 7. عملية الضغط النهائي
-    print(f"🗜️ جاري ضغط الترسانة... قد يستغرق هذا دقيقة...")
-    # نستخدم صيغة zip ونضغط محتويات مجلد vendor
-    shutil.make_archive("vendor_assets", 'zip', vendor_dir)
-    
-    if os.path.exists("vendor_assets.zip"):
-        size_mb = os.path.getsize("vendor_assets.zip") / (1024 * 1024)
-        print(f"✅ تم إنشاء الترسانة بنجاح!")
-        print(f"📦 حجم الملف النهائي: {size_mb:.2f} MB")
-        # حذف مجلد vendor المؤقت لتوفير مساحة
+    # استبدل سطر الضغط القديم بهذا الجزء:
+    print(f"🗜️ جاري الضغط بتقنية Zstd الفائقة...")
+    # c: create, I: use zstd, f: file
+    # سنقوم بضغط محتويات مجلد vendor
+    try:
+        subprocess.run([
+            "tar", "--zstd", "-cf", "vendor_assets.tar.zst", "-C", vendor_dir, "."
+        ], check=True)
+        
+        size_mb = os.path.getsize("vendor_assets.tar.zst") / (1024 * 1024)
+        print(f"✅ تم إنشاء الترسانة (Zstd) بنجاح! الحجم: {size_mb:.2f} MB")
         shutil.rmtree(vendor_dir)
-    else:
-        print("❌ فشل إنشاء ملف الـ ZIP!")
+    except Exception as e:
+        print(f"❌ فشل ضغط Zstd: {e}")
         sys.exit(1)
+
+    
 
 if __name__ == "__main__":
     setup()

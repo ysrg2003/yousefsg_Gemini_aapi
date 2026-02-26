@@ -24,6 +24,7 @@ async def run_gemini_automation(prompt):
             headless=True,
             block_images=True,
             i_know_what_im_doing=True  # ضروري لتجنب تحذيرات الـ WAF
+            addons=[]
         ) as browser:
             
             context = await browser.new_context(

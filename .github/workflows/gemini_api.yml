@@ -33,13 +33,22 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🗜️ Fast Unzip Assets
+      - name: 🗜️ Fast Unzip & Injection
         run: |
-          echo "🔓 فك ضغط المحركات والمكتبات..."
-          # فك الضغط إلى المجلد الذي يتوقعه ملف main.py
-          unzip -qn vendor_assets.zip -d vendor_extracted
-          # حذف الملف المضغوط فوراً لتوفير مساحة الرام والقرص
-          rm vendor_assets.zip
+          echo "🔓 فك الضغط ونقل الملفات لمسار النظام الافتراضي..."
+          unzip -qn vendor_assets.zip -d temp_assets
+          
+          # إنشاء المسار الذي يبحث فيه Camoufox تلقائياً
+          mkdir -p /home/runner/.cache/camoufox
+          
+          # نقل المحتويات من الترسانة إلى مسار الكاش الحقيقي للنظام
+          cp -r temp_assets/camoufox_cache/* /home/runner/.cache/camoufox/
+          
+          # تفعيل المكتبات
+          mv temp_assets/python/* . 
+          echo "✅ تم حقن المحرك في مسار النظام."
+
+      
 
       # --- 🔑 منح صلاحيات التنفيذ للمحركات ---
       - name: 🛡️ Fix Executable Permissions

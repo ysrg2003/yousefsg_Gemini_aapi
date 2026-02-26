@@ -11,7 +11,6 @@ jobs:
   run-system:
     runs-on: ubuntu-latest
     
-    # الصلاحيات اللازمة للتعامل مع الـ Releases والـ Artifacts
     permissions:
       contents: read
       actions: write
@@ -25,68 +24,55 @@ jobs:
         with:
           python-version: '3.11'
 
-      # --- 🚀 المرحلة الأهم: جلب الترسانة الجاهزة ---
       - name: 📥 Download Engine Assets
         run: |
-          echo "📥 جاري تحميل الترسانة من الـ Release v1.0.0..."
+          echo "📥 جاري سحب الترسانة v1.0.0..."
           gh release download v1.0.0 -p "vendor_assets.zip"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🗜️ Fast Unzip & Injection
         run: |
-          echo "🔓 فك الضغط ونقل الملفات لمسار النظام الافتراضي..."
-          unzip -qn vendor_assets.zip -d temp_assets
+          echo "🔓 فك الضغط والحقن الذكي..."
+          # فك الضغط إلى مجلد موحد
+          mkdir -p assets_extracted
+          unzip -qn vendor_assets.zip -d assets_extracted
           
-          # إنشاء المسار الذي يبحث فيه Camoufox تلقائياً
+          # إنشاء مسارات النظام الافتراضية
           mkdir -p /home/runner/.cache/camoufox
+          mkdir -p /home/runner/.cache/ms-playwright
           
-          # نقل المحتويات من الترسانة إلى مسار الكاش الحقيقي للنظام
-          cp -r temp_assets/camoufox_cache/* /home/runner/.cache/camoufox/
+          # نقل ملفات المحرك (Camoufox) لمسار النظام لخدعة المكتبة ومنع التحميل
+          if [ -d "assets_extracted/camoufox_cache" ]; then
+            cp -rn assets_extracted/camoufox_cache/* /home/runner/.cache/camoufox/ 2>/dev/null || true
+          fi
+
+          # نقل محركات المتصفح (Playwright) إن وجدت
+          if [ -d "assets_extracted/browsers" ]; then
+            cp -rn assets_extracted/browsers/* /home/runner/.cache/ms-playwright/ 2>/dev/null || true
+          fi
           
-          # تفعيل المكتبات
-          mv temp_assets/python/* . 
-          echo "✅ تم حقن المحرك في مسار النظام."
+          echo "✅ تم حقن المحركات في مسار النظام بنجاح."
 
-      
-
-      # --- 🔑 منح صلاحيات التنفيذ للمحركات ---
-      - name: 🛡️ Fix Executable Permissions
+      - name: 🛡️ Fix Permissions
         run: |
-          echo "🔑 تفعيل صلاحيات المحركات..."
-          # نمنح صلاحية التنفيذ لكل ما هو داخل مجلد browsers و camoufox_cache
-          find vendor_extracted/browsers -type f -exec chmod +x {} +
-          find vendor_extracted/camoufox_cache -type f -exec chmod +x {} +
-          # التأكد من صلاحيات تنفيذ بايثون والمكتبات إذا لزم الأمر
-          chmod -R +x vendor_extracted/python || true
+          echo "🔑 تفعيل صلاحيات التنفيذ..."
+          chmod -R +x /home/runner/.cache/camoufox/ 2>/dev/null || true
+          chmod -R +x /home/runner/.cache/ms-playwright/ 2>/dev/null || true
 
-      # --- 🤖 تشغيل المحرك الأساسي ---
       - name: ⚡ Execute Gemini Automation
         env:
           GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
+          # إضافة مسار المكتبات المستخرجة إلى مسار بايثون
+          PYTHONPATH: ${{ github.workspace }}/assets_extracted/python
         run: |
-          # 1. إنشاء مسار الكاش الافتراضي لنظام لينكس
-          mkdir -p /home/runner/.cache/camoufox
-          
-          # 2. نقل ملفات الترسانة إلى المسار الذي يتوقعه المتصفح افتراضياً
-          if [ -d "vendor_extracted/camoufox_cache" ]; then
-            cp -r vendor_extracted/camoufox_cache/* /home/runner/.cache/camoufox/
-            echo "📦 تمت عملية حقن المحرك بنجاح."
-          fi
-          
-          # 3. إعداد المكتبات البرمجية
-          export PYTHONPATH=$PYTHONPATH:$(pwd)/vendor_extracted/python
-          
-          # 4. التشغيل
+          echo "🚀 تشغيل المحرك الأساسي..."
           python main.py "${{ github.event.inputs.prompt }}"
 
-      
-
-      # --- 📤 رفع النتيجة النهائية ---
       - name: 📄 Upload Result
         if: always()
         uses: actions/upload-artifact@v4
         with:
           name: gemini-json
           path: result.json
-          retention-days: 1 # صلاحية الملف يوم واحد فقط لتوفير المساحة
+          retention-days: 1

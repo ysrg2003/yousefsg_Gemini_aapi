@@ -26,48 +26,39 @@ jobs:
 
       - name: 📥 Download Engine Assets
         run: |
+          echo "📥 جاري سحب الترسانة v1.0.0..."
           gh release download v1.0.0 -p "vendor_assets.zip"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🚀 Fast Setup & Fix
+      - name: 🗜️ Smart Unzip & Injection
         run: |
-          # 1. إنشاء المسار الذي تريده المكتبة
-          mkdir -p /home/runner/.cache/camoufox
-          
-          # 2. فك ضغط "الكاش" مباشرة داخل مسار النظام الافتراضي
-          # هذا يضمن عدم وجود مجلدات وسيطة تسبب "Cleaning up cache"
-          unzip -qo vendor_assets.zip "cache/*" -d .
-          mv cache/* /home/runner/.cache/camoufox/
-          
-          # 3. فك ضغط المكتبات
-          unzip -qo vendor_assets.zip "python/*" -d .
-          echo "✅ تم تجهيز البيئة."
-
-      
-
-      - name: 🗜️ Fast Unzip & Injection
-        run: |
-          echo "🔓 فك الضغط والحقن الذكي..."
-          # فك الضغط إلى مجلد موحد
+          echo "🔓 فك الضغط الذكي..."
           mkdir -p assets_extracted
-          unzip -qn vendor_assets.zip -d assets_extracted
+          unzip -qo vendor_assets.zip -d assets_extracted
           
-          # إنشاء مسارات النظام الافتراضية
+          # مسارات النظام التي يجب أن نحقن فيها الملفات
           mkdir -p /home/runner/.cache/camoufox
           mkdir -p /home/runner/.cache/ms-playwright
-          
-          # نقل ملفات المحرك (Camoufox) لمسار النظام لخدعة المكتبة ومنع التحميل
-          if [ -d "assets_extracted/camoufox_cache" ]; then
-            cp -rn assets_extracted/camoufox_cache/* /home/runner/.cache/camoufox/ 2>/dev/null || true
-          fi
 
-          # نقل محركات المتصفح (Playwright) إن وجدت
-          if [ -d "assets_extracted/browsers" ]; then
-            cp -rn assets_extracted/browsers/* /home/runner/.cache/ms-playwright/ 2>/dev/null || true
-          fi
+          # --- البحث المرن ونقل الملفات ---
+          # نبحث عن مجلد الكاش أينما كان (حتى لو كان اسمه camoufox_cache أو cache)
+          find assets_extracted -type d -name "*cache*" -not -path "*python*" | while read dir; do
+            echo "📦 حقن الكاش من: $dir"
+            cp -rn "$dir"/* /home/runner/.cache/camoufox/ 2>/dev/null || true
+          done
+
+          # نبحث عن مجلد المتصفحات (browsers)
+          find assets_extracted -type d -name "browsers" | while read dir; do
+            echo "🌐 حقن المتصفحات من: $dir"
+            cp -rn "$dir"/* /home/runner/.cache/ms-playwright/ 2>/dev/null || true
+          done
+
+          # نبحث عن مجلد المكتبات (python) لإضافته لـ PYTHONPATH لاحقاً
+          PYTHON_LIB_PATH=$(find $(pwd)/assets_extracted -type d -name "python" | head -n 1)
+          echo "PYTHON_PATH_VAR=$PYTHON_LIB_PATH" >> $GITHUB_ENV
           
-          echo "✅ تم حقن المحركات في مسار النظام بنجاح."
+          echo "✅ تم تجهيز البيئة بنجاح."
 
       - name: 🛡️ Fix Permissions
         run: |
@@ -78,10 +69,10 @@ jobs:
       - name: ⚡ Execute Gemini Automation
         env:
           GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
-          # إضافة مسار المكتبات المستخرجة إلى مسار بايثون
-          PYTHONPATH: ${{ github.workspace }}/assets_extracted/python
+          PYTHONPATH: ${{ env.PYTHON_PATH_VAR }}
+          CAMOUFOX_CACHE_DIR: /home/runner/.cache/camoufox
         run: |
-          echo "🚀 تشغيل المحرك الأساسي..."
+          echo "🚀 تشغيل المحرك الأساسي من المسار: $PYTHONPATH"
           python main.py "${{ github.event.inputs.prompt }}"
 
       - name: 📄 Upload Result

@@ -4,28 +4,37 @@ import json
 import os
 import stat
 
+import asyncio
+import sys
+import json
+import os
+import stat
+
 # ==========================================================
-# 1. تكوين المسارات (الاعتماد على الكاش الخارجي)
+# 1. تكوين المسارات الذكية (السرعة القصوى)
 # ==========================================================
-# ملاحظة: الملفات الآن جاهزة في 'vendor_extracted' بفضل الـ Workflow
 extract_path = os.path.join(os.getcwd(), "vendor_extracted")
 vendor_python = os.path.join(extract_path, "python")
 
-# حقن المسارات في نظام التشغيل و Python
-sys.path.insert(0, vendor_python)
+# --- التعديل السحري هنا ---
+# نخبر Camoufox أن يبحث عن محرك المتصفح داخل المجلد المستخرج بدلاً من تحميله
+os.environ["CAMOUFOX_CACHE_DIR"] = os.path.join(extract_path, "camoufox_cache")
+# إعداد مسارات Playwright والمكتبات
 os.environ["PLAYWRIGHT_BROWSERS_PATH"] = os.path.join(extract_path, "browsers")
+sys.path.insert(0, vendor_python)
 
 # ==========================================================
-# 2. الاستيراد الآمن (بعد حقن المسارات)
+# 2. الاستيراد الآمن (بعد إعداد البيئة)
 # ==========================================================
 try:
     from camoufox.async_api import AsyncCamoufox
-    print("🚀 المحرك جاهز: تم تحميل Camoufox من المسار المخصص.")
+    print("🚀 المحرك جاهز: تم تفعيل نظام الكاش المحلي (No Download Mode).")
 except ImportError as e:
-    print(f"❌ خطأ فادح: لم يتم العثور على المكتبات! تأكد من وجود مجلد 'vendor_extracted'.\n{e}")
+    print(f"❌ خطأ: المكتبات مفقودة في 'vendor_extracted'.\n{e}")
     sys.exit(1)
 
 GEMINI_URL = "https://gemini.google.com/app"
+
 
 # ==========================================================
 # 3. محرك الأتمتة (The Core Engine)

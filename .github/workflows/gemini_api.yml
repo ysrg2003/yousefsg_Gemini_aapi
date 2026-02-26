@@ -1,0 +1,29 @@
+name: Gemini Simple API
+on:
+  workflow_dispatch:
+    inputs:
+      prompt:
+        required: true
+        type: string
+
+jobs:
+  run-system:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Run
+        env:
+          GEMINI_COOKIES: ${{ secrets.GEMINI_COOKIES }}
+        run: python main.py "${{ github.event.inputs.prompt }}"
+
+      - name: Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: gemini-json
+          path: result.json

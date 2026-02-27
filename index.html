@@ -23,16 +23,21 @@
             --border: #444746; --shadow: 0 4px 25px rgba(0,0,0,0.3);
         }
 
-        * { box-sizing: border-box; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+        * { box-sizing: border-box; transition: background 0.25s, color 0.25s; }
 
         body {
             font-family: 'IBM Plex Sans Arabic', sans-serif;
             background-color: var(--bg); color: var(--text);
-            margin: 0; display: flex; flex-direction: column;
-            height: 100vh; overflow: hidden;
+            margin: 0; 
+            display: flex; 
+            flex-direction: column;
+            height: 100vh; 
+            height: 100dvh; /* الارتفاع الفعلي للجوال لضمان عدم اختفاء العناصر خلف المتصفح */
+            overflow: hidden;
         }
 
         header {
+            flex-shrink: 0;
             padding: 12px 24px; display: flex; justify-content: space-between;
             align-items: center; background: var(--card); border-bottom: 1px solid var(--border);
             box-shadow: var(--shadow); z-index: 1000;
@@ -50,74 +55,81 @@
         #settings-panel {
             background: var(--card); padding: 20px; border-bottom: 1px solid var(--border);
             display: none; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 15px; animation: slideDown 0.4s ease;
+            gap: 15px; flex-shrink: 0;
         }
-        @keyframes slideDown { from { opacity:0; transform: translateY(-20px); } to { opacity:1; transform: translateY(0); } }
 
         .input-field { display: flex; flex-direction: column; gap: 5px; }
-        .input-field label { font-size: 11px; font-weight: 700; text-transform: uppercase; opacity: 0.6; }
-        input {
-            background: var(--secondary); border: 1px solid var(--border);
-            color: var(--text); padding: 12px; border-radius: 10px; font-size: 14px; outline: none;
-        }
+        .input-field label { font-size: 12px; font-weight: bold; opacity: 0.8; }
+        .input-field input { padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--secondary); color: var(--text); }
 
+        /* منطقة المحادثة: تأخذ المساحة المتبقية فقط */
         #chat-viewport {
-            flex-grow: 1; overflow-y: auto; padding: 30px 15% 120px;
-            display: flex; flex-direction: column; gap: 25px; scroll-behavior: smooth;
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px 10%; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 20px; 
+            scroll-behavior: smooth;
         }
 
-        .msg-container { display: flex; flex-direction: column; max-width: 95%; animation: fadeIn 0.4s ease; }
-        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } }
-        
+        .msg-container { display: flex; flex-direction: column; max-width: 95%; animation: fadeIn 0.3s ease; }
         .user-align { align-self: flex-start; }
         .bot-align { align-self: flex-end; width: 100%; align-items: flex-end; }
 
         .bubble {
-            padding: 16px 22px; border-radius: 20px; font-size: 15.5px; line-height: 1.7;
+            padding: 14px 18px; border-radius: 18px; font-size: 15px; line-height: 1.6;
             word-wrap: break-word; position: relative;
             box-shadow: 0 2px 8px rgba(0,0,0,0.04);
         }
+        .user-align .bubble { background: var(--user-bubble); border-bottom-right-radius: 4px; }
+        .bot-align .bubble { background: var(--bot-bubble); border: 1px solid var(--border); border-bottom-left-radius: 4px; max-width: 90%; }
 
-        .user-align .bubble { background: var(--user-bubble); border-bottom-right-radius: 4px; color: var(--text); }
-        .bot-align .bubble { background: var(--bot-bubble); border: 1px solid var(--border); border-bottom-left-radius: 4px; max-width: 85%; }
+        .msg-actions { display: flex; gap: 10px; margin-top: 5px; margin-bottom: 10px; }
+        .action-link { font-size: 12px; color: var(--primary); cursor: pointer; font-weight: bold; }
 
-        /* تنسيق الأكواد والـ Markdown داخل الفقاعات */
-        .bubble pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 10px; overflow-x: auto; direction: ltr; }
-        .bubble code { font-family: 'Courier New', monospace; background: rgba(0,0,0,0.05); padding: 2px 5px; border-radius: 4px; }
-        [data-theme="dark"] .bubble code { background: rgba(255,255,255,0.1); }
-
-        .msg-actions { display: flex; gap: 12px; margin-top: 8px; opacity: 0.6; }
-        .action-link { font-size: 12px; color: var(--primary); cursor: pointer; font-weight: 600; }
-
+        /* منطقة الإدخال: ثابتة في التدفق وليست فوق العناصر */
         .footer-area {
-            position: fixed; bottom: 0; left: 0; right: 0;
-            padding: 20px; background: linear-gradient(to top, var(--bg) 70%, transparent);
-            display: flex; flex-direction: column; align-items: center;
+            flex-shrink: 0;
+            padding: 15px; 
+            background: var(--card); 
+            border-top: 1px solid var(--border);
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .input-container {
-            width: 100%; max-width: 850px; background: var(--card);
+            width: 100%; max-width: 800px; background: var(--secondary);
             border: 1px solid var(--border); border-radius: 24px;
-            display: flex; align-items: center; padding: 8px 16px;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            display: flex; align-items: center; padding: 4px 12px;
         }
 
         textarea {
-            flex-grow: 1; background: transparent; border: none; color: var(--text);
-            padding: 12px; font-size: 16px; resize: none; outline: none;
-            max-height: 150px; min-height: 24px; font-family: inherit;
+            flex: 1; background: transparent; border: none; color: var(--text);
+            padding: 10px; font-size: 15px; resize: none; outline: none;
+            max-height: 120px; min-height: 24px; font-family: inherit;
         }
 
         .send-btn {
             background: var(--primary); color: white; border: none;
-            width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+            width: 38px; height: 38px; border-radius: 50%; cursor: pointer;
             display: flex; align-items: center; justify-content: center;
         }
-        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-        #status-bar { font-size: 12px; margin-bottom: 10px; color: var(--primary); font-weight: 700; display: none; }
+        .send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        #status-bar { font-size: 12px; margin-bottom: 8px; color: var(--primary); font-weight: 700; display: none; }
         .loader { width: 12px; height: 12px; border: 2px solid var(--primary); border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; margin-left: 8px; }
+
         @keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        @media (max-width: 768px) {
+            #chat-viewport { padding: 20px 5%; }
+            .bot-align .bubble { max-width: 95%; }
+        }
     </style>
 </head>
 <body data-theme="light">
@@ -132,7 +144,7 @@
 
 <div id="settings-panel">
     <div class="input-field">
-        <label>GitHub Personal Token</label>
+        <label>GitHub Token</label>
         <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx">
     </div>
     <div class="input-field">
@@ -143,22 +155,22 @@
 
 <div id="chat-viewport">
     <div class="msg-container bot-align">
-        <div class="bubble">مرحباً! النظام الآن يدعم الردود المنسقة (Markdown) وبصمة المتصفح المحدثة. كيف يمكنني مساعدتك اليوم؟</div>
+        <div class="bubble">تم تحديث واجهة الاستخدام بنجاح! تم إصلاح مشكلة تداخل العناصر وضبط ارتفاع الصفحة.</div>
     </div>
 </div>
 
 <div class="footer-area">
-    <div id="status-bar"><span class="loader"></span> جاري استدعاء Gemini عبر GitHub Actions...</div>
+    <div id="status-bar"><span class="loader"></span> جاري المعالجة...</div>
     <div class="input-container">
         <textarea id="promptInput" rows="1" placeholder="اكتب سؤالك هنا..." oninput="autoResize(this)"></textarea>
         <button class="send-btn" id="sendBtn" onclick="startProcess()">
-            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
         </button>
     </div>
 </div>
 
 <script>
-    // 1. التجهيز الأولي
+    // تهيئة البيانات عند التحميل
     window.onload = () => {
         document.getElementById('ghToken').value = localStorage.getItem('cfg_token') || '';
         document.getElementById('ghRepo').value = localStorage.getItem('cfg_repo') || '';
@@ -176,7 +188,7 @@
 
     function toggleSettings() {
         const p = document.getElementById('settings-panel');
-        p.style.display = p.style.display === 'grid' ? 'none' : 'grid';
+        p.style.display = (p.style.display === 'grid' || p.style.display === 'flex') ? 'none' : 'grid';
     }
 
     function autoResize(el) {
@@ -184,7 +196,6 @@
         el.style.height = el.scrollHeight + 'px';
     }
 
-    // 2. إدارة الرسائل مع دعم Markdown
     function createMessage(text, side) {
         const viewport = document.getElementById('chat-viewport');
         const container = document.createElement('div');
@@ -194,7 +205,6 @@
         bubble.className = 'bubble';
         
         if (side === 'bot') {
-            // تحويل الـ Markdown إلى HTML
             bubble.innerHTML = marked.parse(text);
         } else {
             bubble.innerText = text;
@@ -210,6 +220,7 @@
         }
 
         viewport.appendChild(container);
+        // تمرير تلقائي للأسفل عند إضافة رسالة جديدة
         viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
     }
 
@@ -220,7 +231,6 @@
         setTimeout(() => el.innerText = "📋 نسخ الرد", 2000);
     }
 
-    // 3. الاتصال بـ GitHub API
     async function startProcess() {
         const token = document.getElementById('ghToken').value;
         const repo = document.getElementById('ghRepo').value;
@@ -233,6 +243,7 @@
 
         createMessage(prompt, 'user');
         document.getElementById('promptInput').value = '';
+        document.getElementById('promptInput').style.height = 'auto';
         document.getElementById('sendBtn').disabled = true;
         document.getElementById('status-bar').style.display = 'block';
 
@@ -244,7 +255,6 @@
             });
 
             if(!res.ok) throw new Error("خطأ في الاتصال بـ GitHub.");
-            
             checkStatus(repo, token);
         } catch (e) {
             createMessage("❌ خطأ: " + e.message, 'bot');
@@ -255,20 +265,22 @@
     async function checkStatus(repo, token) {
         const startTime = Date.now();
         const interval = setInterval(async () => {
-            // فحص الحالة كل 5 ثوانٍ لأن النظام أصبح أسرع
-            const res = await fetch(`https://api.github.com/repos/${repo}/actions/runs?per_page=1`, {
-                headers: { 'Authorization': `Bearer ${token}` }
-            });
-            const data = await res.json();
-            const run = data.workflow_runs[0];
+            try {
+                const res = await fetch(`https://api.github.com/repos/${repo}/actions/runs?per_page=1`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                const data = await res.json();
+                const run = data.workflow_runs[0];
 
-            if(run && run.status === "completed") {
-                clearInterval(interval);
-                if(run.conclusion === "success") fetchArtifact(repo, run.id, token);
-                else { createMessage("❌ فشل الأكشن في التنفيذ.", 'bot'); resetUI(); }
+                if(run && run.status === "completed") {
+                    clearInterval(interval);
+                    if(run.conclusion === "success") fetchArtifact(repo, run.id, token);
+                    else { createMessage("❌ فشل الأكشن في التنفيذ.", 'bot'); resetUI(); }
+                }
+            } catch (e) {
+                console.error("Error checking status:", e);
             }
             
-            // مهلة 4 دقائق كحد أقصى
             if(Date.now() - startTime > 240000) { clearInterval(interval); resetUI(); }
         }, 5000);
     }
@@ -281,6 +293,8 @@
             const data = await res.json();
             const art = data.artifacts.find(a => a.name === 'gemini-json');
 
+            if (!art) throw new Error("لم يتم العثور على ملف النتائج.");
+
             const zipRes = await fetch(art.archive_download_url, { headers: { 'Authorization': `Bearer ${token}` } });
             const blob = await zipRes.blob();
             const zip = await JSZip.loadAsync(blob);
@@ -288,7 +302,7 @@
             
             createMessage(JSON.parse(jsonStr).response, 'bot');
         } catch (e) {
-            createMessage("❌ فشل استلام ملف النتيجة.", 'bot');
+            createMessage("❌ فشل استلام ملف النتيجة: " + e.message, 'bot');
         } finally {
             resetUI();
         }

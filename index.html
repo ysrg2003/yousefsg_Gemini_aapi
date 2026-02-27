@@ -28,11 +28,14 @@
 
         * { box-sizing: border-box; transition: background 0.25s, color 0.25s; }
 
+        /* 1. منطق مربع إدخال الأوامر (الاستقرار وعدم التغطية) */
         body {
             font-family: 'IBM Plex Sans Arabic', sans-serif;
             background-color: var(--bg); color: var(--text);
             margin: 0; display: flex; flex-direction: column;
-            height: 100vh; height: 100dvh; overflow: hidden;
+            height: 100vh;
+            height: 100dvh; /* مهم جداً للمتصفحات الحديثة والجوال */
+            overflow: hidden; /* يمنع الصفحة كاملة من السكرول، السكرول يكون داخل الشات فقط */
         }
 
         header {
@@ -61,7 +64,9 @@
         .input-field input { padding: 8px; border-radius: 8px; border: 1px solid var(--border); background: var(--secondary); color: var(--text); }
 
         #chat-viewport {
-            flex: 1; overflow-y: auto; padding: 20px 10%; 
+            flex: 1; /* يأخذ كل المساحة المتاحة ويجبر الفوتر على البقاء بالأسفل */
+            overflow-y: auto; /* يسمح بالتمرير داخل منطقة الرسائل فقط */
+            padding: 20px 10%; 
             display: flex; flex-direction: column; gap: 20px; scroll-behavior: smooth;
         }
 
@@ -75,13 +80,47 @@
             box-shadow: 0 2px 8px rgba(0,0,0,0.04); max-width: 100%;
         }
 
-        /* منع أي أزرار غريبة قادمة من سكرابينج جوجل من الظهور */
         .bubble button:not(.copy-btn-snippet) { display: none !important; }
 
         .user-align .bubble { background: var(--user-bubble); border-bottom-right-radius: 4px; }
         .bot-align .bubble { background: var(--bot-bubble); border: 1px solid var(--border); border-bottom-left-radius: 4px; max-width: 92%; }
 
-        /* --- حاوية الكود المطور --- */
+        /* 2. CSS الجداول المطور */
+        .bubble table {
+            border-collapse: collapse; /* دمج الحدود لمنع الفراغات */
+            width: 100%;               /* أخذ كامل عرض فقاعة الدردشة */
+            margin: 15px 0;            /* مسافة عمودية لفصل الجدول عن النص */
+            background: var(--bg);     /* لون خلفية متناسق مع الثيم */
+            border-radius: 8px;        /* حواف ناعمة للجدول */
+            overflow: hidden;          /* قص الزوايا الحادة */
+            display: block;            /* تحويل الجدول لكتلة لتمكين التمرير الأفقي */
+            overflow-x: auto;          /* إضافة شريط تمرير إذا كان الجدول عريضاً */
+            border: 1px solid var(--border); /* حد خارجي خفيف */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05); /* ظل ناعم للعمق */
+        }
+
+        .bubble th {
+            background: var(--primary); /* لون التمييز الأساسي */
+            color: white !important;    /* نص أبيض للتباين العالي */
+            padding: 12px;              /* مساحة داخلية مريحة */
+            text-align: right;          /* محاذاة النص لليمين */
+            font-weight: 600;           /* خط عريض للتمييز */
+            white-space: nowrap;        /* منع انكسار السطر في العنوان */
+        }
+
+        .bubble td {
+            border: 1px solid var(--border); /* حدود داخلية بين الخلايا */
+            padding: 10px;                   /* مساحة داخلية للنص */
+            text-align: right;               /* محاذاة النص لليمين */
+            min-width: 100px;                /* الحد الأدنى لعرض الخلية لمنع التكدس */
+            color: var(--text);              /* لون النص المعتمد في الثيم */
+        }
+
+        .bubble tr:nth-child(even) {
+            background-color: rgba(0,0,0,0.03); /* تلوين السطور الزوجية لسهولة القراءة */
+        }
+
+        /* حاوية الكود المطور */
         .code-wrapper {
             margin: 15px 0; border-radius: 10px; overflow: hidden;
             border: 1px solid var(--border); background: var(--code-bg);
@@ -110,7 +149,8 @@
         }
 
         .footer-area {
-            flex-shrink: 0; padding: 15px; background: var(--card); 
+            flex-shrink: 0; /* يمنع تقلص منطقة الإدخال مهما زاد محتوى الشات */
+            padding: 15px; background: var(--card); 
             border-top: 1px solid var(--border); width: 100%;
             display: flex; flex-direction: column; align-items: center;
         }
@@ -124,7 +164,7 @@
         textarea {
             flex: 1; background: transparent; border: none; color: var(--text);
             padding: 10px; font-size: 15px; resize: none; outline: none;
-            max-height: 120px; min-height: 24px; font-family: inherit;
+            max-height: 150px; min-height: 24px; font-family: inherit;
         }
 
         .send-btn {
@@ -135,6 +175,10 @@
 
         #status-bar { font-size: 12px; margin-bottom: 8px; color: var(--primary); font-weight: 700; display: none; }
         .loader { width: 12px; height: 12px; border: 2px solid var(--primary); border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; margin-left: 8px; }
+
+        .msg-actions { margin-top: 8px; font-size: 12px; display: flex; gap: 15px; opacity: 0.7; }
+        .action-link { cursor: pointer; color: var(--primary); font-weight: 500; }
+        .action-link:hover { text-decoration: underline; }
 
         @keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
@@ -168,7 +212,7 @@
 
 <div id="chat-viewport">
     <div class="msg-container bot-align">
-        <div class="bubble">مرحباً بك! تم إصلاح نظام عرض الأكواد وتصفية الأزرار الزائدة.</div>
+        <div class="bubble">مرحباً! تم تحديث النظام ليدعم عرض الجداول والتحكم الذكي في حجم مربع الكتابة.</div>
     </div>
 </div>
 
@@ -203,9 +247,10 @@
         p.style.display = (p.style.display === 'grid' || p.style.display === 'flex') ? 'none' : 'grid';
     }
 
+    /* ب- منع تغطية النص (التوسع الذكي) */
     function autoResize(el) {
-        el.style.height = 'auto';
-        el.style.height = el.scrollHeight + 'px';
+        el.style.height = 'auto'; // إعادة ضبط الارتفاع لحسابه من جديد
+        el.style.height = el.scrollHeight + 'px'; // تعيين الارتفاع بناءً على حجم النص المكتوب
     }
 
     function createMessage(text, side) {
@@ -217,12 +262,11 @@
         bubble.className = 'bubble';
         
         if (side === 'bot') {
-            // نضع الـ HTML وننظفه من أي أزرار أصلية قادمة من جوجل
             bubble.innerHTML = text;
 
+            // تنسيق الأكواد البرمجية
             const preBlocks = bubble.querySelectorAll('pre');
             preBlocks.forEach(pre => {
-                // منع التكرار إذا كان البلوك بداخل wrapper فعلاً
                 if (pre.parentElement.classList.contains('code-wrapper')) return;
 
                 const wrapper = document.createElement('div');
@@ -253,7 +297,7 @@
         if(side === 'bot') {
             const actions = document.createElement('div');
             actions.className = 'msg-actions';
-            actions.innerHTML = `<span class="action-link" onclick="copyFullResponse(this)">📋 نسخ الرد كاملاً</span>`;
+            actions.innerHTML = `<span class="action-link" onclick="copyFullResponse(this)">📋 نسخ الرد</span>`;
             container.appendChild(actions);
         }
 
@@ -265,16 +309,15 @@
         const codeElement = btn.parentElement.nextElementSibling.querySelector('code') || btn.parentElement.nextElementSibling;
         const text = codeElement.innerText;
         await navigator.clipboard.writeText(text);
-        const originalText = btn.innerText;
         btn.innerText = "✅ تم";
-        setTimeout(() => btn.innerText = originalText, 2000);
+        setTimeout(() => btn.innerText = "نسخ", 2000);
     }
 
     async function copyFullResponse(el) {
         const text = el.parentElement.previousElementSibling.innerText;
         await navigator.clipboard.writeText(text);
         el.innerText = "✅ تم النسخ";
-        setTimeout(() => el.innerText = "📋 نسخ الرد كاملاً", 2000);
+        setTimeout(() => el.innerText = "📋 نسخ الرد", 2000);
     }
 
     async function startProcess() {
@@ -289,7 +332,7 @@
 
         createMessage(prompt, 'user');
         document.getElementById('promptInput').value = '';
-        document.getElementById('promptInput').style.height = 'auto';
+        document.getElementById('promptInput').style.height = 'auto'; // تصفير الارتفاع بعد الإرسال
         document.getElementById('sendBtn').disabled = true;
         document.getElementById('status-bar').style.display = 'block';
 

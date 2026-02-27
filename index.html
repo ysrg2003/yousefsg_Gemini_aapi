@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Gemini AAPI Pro | الترسانة الكاملة</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/9.1.2/marked.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Arabic:wght@300;400;500;600&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg: #f8f9fa; --card: #ffffff; --text: #1f1f1f; --primary: #1a73e8;
+            --secondary: #f1f3f4; --user-bubble: #e8f0fe; --bot-bubble: #ffffff;
+            --border: #dee2e6; --accent: linear-gradient(135deg, #1a73e8, #701af0);
+            --shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+
+        [data-theme="dark"] {
+            --bg: #131314; --card: #1e1f20; --text: #e3e3e3; --primary: #8ab4f8;
+            --secondary: #2d2f31; --user-bubble: #004a77; --bot-bubble: #1e1f20;
+            --border: #444746; --shadow: 0 4px 25px rgba(0,0,0,0.3);
+        }
+
+        * { box-sizing: border-box; transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1); }
+
+        body {
+            font-family: 'IBM Plex Sans Arabic', sans-serif;
+            background-color: var(--bg); color: var(--text);
+            margin: 0; display: flex; flex-direction: column;
+            height: 100vh; overflow: hidden;
+        }
+
+        header {
+            padding: 12px 24px; display: flex; justify-content: space-between;
+            align-items: center; background: var(--card); border-bottom: 1px solid var(--border);
+            box-shadow: var(--shadow); z-index: 1000;
+        }
+
+        .logo { font-size: 1.4rem; font-weight: 600; background: var(--accent); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+
+        .nav-tools { display: flex; gap: 12px; }
+        .tool-btn {
+            background: var(--secondary); border: none; color: var(--text);
+            width: 42px; height: 42px; border-radius: 12px; cursor: pointer;
+            display: flex; align-items: center; justify-content: center; font-size: 20px;
+        }
+
+        #settings-panel {
+            background: var(--card); padding: 20px; border-bottom: 1px solid var(--border);
+            display: none; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px; animation: slideDown 0.4s ease;
+        }
+        @keyframes slideDown { from { opacity:0; transform: translateY(-20px); } to { opacity:1; transform: translateY(0); } }
+
+        .input-field { display: flex; flex-direction: column; gap: 5px; }
+        .input-field label { font-size: 11px; font-weight: 700; text-transform: uppercase; opacity: 0.6; }
+        input {
+            background: var(--secondary); border: 1px solid var(--border);
+            color: var(--text); padding: 12px; border-radius: 10px; font-size: 14px; outline: none;
+        }
+
+        #chat-viewport {
+            flex-grow: 1; overflow-y: auto; padding: 30px 15% 120px;
+            display: flex; flex-direction: column; gap: 25px; scroll-behavior: smooth;
+        }
+
+        .msg-container { display: flex; flex-direction: column; max-width: 95%; animation: fadeIn 0.4s ease; }
+        @keyframes fadeIn { from { opacity:0; transform: translateY(10px); } }
+        
+        .user-align { align-self: flex-start; }
+        .bot-align { align-self: flex-end; width: 100%; align-items: flex-end; }
+
+        .bubble {
+            padding: 16px 22px; border-radius: 20px; font-size: 15.5px; line-height: 1.7;
+            word-wrap: break-word; position: relative;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+
+        .user-align .bubble { background: var(--user-bubble); border-bottom-right-radius: 4px; color: var(--text); }
+        .bot-align .bubble { background: var(--bot-bubble); border: 1px solid var(--border); border-bottom-left-radius: 4px; max-width: 85%; }
+
+        /* تنسيق الأكواد والـ Markdown داخل الفقاعات */
+        .bubble pre { background: #282c34; color: #abb2bf; padding: 15px; border-radius: 10px; overflow-x: auto; direction: ltr; }
+        .bubble code { font-family: 'Courier New', monospace; background: rgba(0,0,0,0.05); padding: 2px 5px; border-radius: 4px; }
+        [data-theme="dark"] .bubble code { background: rgba(255,255,255,0.1); }
+
+        .msg-actions { display: flex; gap: 12px; margin-top: 8px; opacity: 0.6; }
+        .action-link { font-size: 12px; color: var(--primary); cursor: pointer; font-weight: 600; }
+
+        .footer-area {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            padding: 20px; background: linear-gradient(to top, var(--bg) 70%, transparent);
+            display: flex; flex-direction: column; align-items: center;
+        }
+
+        .input-container {
+            width: 100%; max-width: 850px; background: var(--card);
+            border: 1px solid var(--border); border-radius: 24px;
+            display: flex; align-items: center; padding: 8px 16px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        textarea {
+            flex-grow: 1; background: transparent; border: none; color: var(--text);
+            padding: 12px; font-size: 16px; resize: none; outline: none;
+            max-height: 150px; min-height: 24px; font-family: inherit;
+        }
+
+        .send-btn {
+            background: var(--primary); color: white; border: none;
+            width: 42px; height: 42px; border-radius: 50%; cursor: pointer;
+            display: flex; align-items: center; justify-content: center;
+        }
+        .send-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        #status-bar { font-size: 12px; margin-bottom: 10px; color: var(--primary); font-weight: 700; display: none; }
+        .loader { width: 12px; height: 12px; border: 2px solid var(--primary); border-bottom-color: transparent; border-radius: 50%; display: inline-block; animation: rotation 1s linear infinite; margin-left: 8px; }
+        @keyframes rotation { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    </style>
+</head>
+<body data-theme="light">
+
+<header>
+    <div class="logo">Gemini AAPI Pro</div>
+    <div class="nav-tools">
+        <button class="tool-btn" onclick="toggleSettings()">⚙️</button>
+        <button class="tool-btn" id="themeBtn" onclick="toggleTheme()">🌙</button>
+    </div>
+</header>
+
+<div id="settings-panel">
+    <div class="input-field">
+        <label>GitHub Personal Token</label>
+        <input type="password" id="ghToken" placeholder="ghp_xxxxxxxxxxxx">
+    </div>
+    <div class="input-field">
+        <label>المستودع (User/Repo)</label>
+        <input type="text" id="ghRepo" placeholder="username/repository">
+    </div>
+</div>
+
+<div id="chat-viewport">
+    <div class="msg-container bot-align">
+        <div class="bubble">مرحباً! النظام الآن يدعم الردود المنسقة (Markdown) وبصمة المتصفح المحدثة. كيف يمكنني مساعدتك اليوم؟</div>
+    </div>
+</div>
+
+<div class="footer-area">
+    <div id="status-bar"><span class="loader"></span> جاري استدعاء Gemini عبر GitHub Actions...</div>
+    <div class="input-container">
+        <textarea id="promptInput" rows="1" placeholder="اكتب سؤالك هنا..." oninput="autoResize(this)"></textarea>
+        <button class="send-btn" id="sendBtn" onclick="startProcess()">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor"><path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
+        </button>
+    </div>
+</div>
+
+<script>
+    // 1. التجهيز الأولي
+    window.onload = () => {
+        document.getElementById('ghToken').value = localStorage.getItem('cfg_token') || '';
+        document.getElementById('ghRepo').value = localStorage.getItem('cfg_repo') || '';
+        const theme = localStorage.getItem('cfg_theme') || 'light';
+        document.body.setAttribute('data-theme', theme);
+        document.getElementById('themeBtn').innerText = theme === 'light' ? '🌙' : '☀️';
+    };
+
+    function toggleTheme() {
+        const next = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        document.body.setAttribute('data-theme', next);
+        localStorage.setItem('cfg_theme', next);
+        document.getElementById('themeBtn').innerText = next === 'light' ? '🌙' : '☀️';
+    }
+
+    function toggleSettings() {
+        const p = document.getElementById('settings-panel');
+        p.style.display = p.style.display === 'grid' ? 'none' : 'grid';
+    }
+
+    function autoResize(el) {
+        el.style.height = 'auto';
+        el.style.height = el.scrollHeight + 'px';
+    }
+
+    // 2. إدارة الرسائل مع دعم Markdown
+    function createMessage(text, side) {
+        const viewport = document.getElementById('chat-viewport');
+        const container = document.createElement('div');
+        container.className = `msg-container ${side}-align`;
+        
+        const bubble = document.createElement('div');
+        bubble.className = 'bubble';
+        
+        if (side === 'bot') {
+            // تحويل الـ Markdown إلى HTML
+            bubble.innerHTML = marked.parse(text);
+        } else {
+            bubble.innerText = text;
+        }
+        
+        container.appendChild(bubble);
+
+        if(side === 'bot') {
+            const actions = document.createElement('div');
+            actions.className = 'msg-actions';
+            actions.innerHTML = `<span class="action-link" onclick="copyText(this)">📋 نسخ الرد</span>`;
+            container.appendChild(actions);
+        }
+
+        viewport.appendChild(container);
+        viewport.scrollTo({ top: viewport.scrollHeight, behavior: 'smooth' });
+    }
+
+    async function copyText(el) {
+        const text = el.parentElement.previousElementSibling.innerText;
+        await navigator.clipboard.writeText(text);
+        el.innerText = "✅ تم النسخ";
+        setTimeout(() => el.innerText = "📋 نسخ الرد", 2000);
+    }
+
+    // 3. الاتصال بـ GitHub API
+    async function startProcess() {
+        const token = document.getElementById('ghToken').value;
+        const repo = document.getElementById('ghRepo').value;
+        const prompt = document.getElementById('promptInput').value.trim();
+
+        if(!token || !repo || !prompt) return alert("تأكد من إعداد التوكن والمستودع!");
+
+        localStorage.setItem('cfg_token', token);
+        localStorage.setItem('cfg_repo', repo);
+
+        createMessage(prompt, 'user');
+        document.getElementById('promptInput').value = '';
+        document.getElementById('sendBtn').disabled = true;
+        document.getElementById('status-bar').style.display = 'block';
+
+        try {
+            const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/gemini_api.yml/dispatches`, {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ ref: 'main', inputs: { prompt: prompt } })
+            });
+
+            if(!res.ok) throw new Error("خطأ في الاتصال بـ GitHub.");
+            
+            checkStatus(repo, token);
+        } catch (e) {
+            createMessage("❌ خطأ: " + e.message, 'bot');
+            resetUI();
+        }
+    }
+
+    async function checkStatus(repo, token) {
+        const startTime = Date.now();
+        const interval = setInterval(async () => {
+            // فحص الحالة كل 5 ثوانٍ لأن النظام أصبح أسرع
+            const res = await fetch(`https://api.github.com/repos/${repo}/actions/runs?per_page=1`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const run = data.workflow_runs[0];
+
+            if(run && run.status === "completed") {
+                clearInterval(interval);
+                if(run.conclusion === "success") fetchArtifact(repo, run.id, token);
+                else { createMessage("❌ فشل الأكشن في التنفيذ.", 'bot'); resetUI(); }
+            }
+            
+            // مهلة 4 دقائق كحد أقصى
+            if(Date.now() - startTime > 240000) { clearInterval(interval); resetUI(); }
+        }, 5000);
+    }
+
+    async function fetchArtifact(repo, runId, token) {
+        try {
+            const res = await fetch(`https://api.github.com/repos/${repo}/actions/runs/${runId}/artifacts`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const data = await res.json();
+            const art = data.artifacts.find(a => a.name === 'gemini-json');
+
+            const zipRes = await fetch(art.archive_download_url, { headers: { 'Authorization': `Bearer ${token}` } });
+            const blob = await zipRes.blob();
+            const zip = await JSZip.loadAsync(blob);
+            const jsonStr = await zip.file("result.json").async("string");
+            
+            createMessage(JSON.parse(jsonStr).response, 'bot');
+        } catch (e) {
+            createMessage("❌ فشل استلام ملف النتيجة.", 'bot');
+        } finally {
+            resetUI();
+        }
+    }
+
+    function resetUI() {
+        document.getElementById('sendBtn').disabled = false;
+        document.getElementById('status-bar').style.display = 'none';
+    }
+</script>
+</body>
+</html>
